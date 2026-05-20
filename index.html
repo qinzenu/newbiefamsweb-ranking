@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Loading Screen - NewbieFams</title>
+  <link rel="icon" href="https://i.ibb.co.com/1tBC2ngW/Logo-12-F8-F09.png">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      font-family: 'Arial', sans-serif;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    .loading-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      color: #fff;
+      text-align: center;
+    }
+
+    .camp-scene {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+
+    .camp-scene .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.2);
+    }
+
+    .scene-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Versi diposisikan paling atas di tengah-tengah */
+    .version {
+      position: absolute;
+      font-weight: bold;
+      top: 112px;
+      /* Jarak aman dari atas layar */
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      color: cyan;
+      z-index: 1;
+    }
+
+    /* Logo diposisikan tepat di bawah versi */
+    .logo {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      /* Diperbaiki dari 52% agar benar-benar di tengah */
+      transform: translateX(-50%);
+      width: 120px;
+      height: auto;
+      z-index: 0;
+    }
+
+    .progress {
+      position: absolute;
+      bottom: 50px;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .progress-bar {
+      width: 90%;
+      max-width: 500px;
+      height: 20px;
+      background: #111;
+      margin: 10px auto;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(to right, #60a5fa, #8758f1);
+      width: 0;
+      border-radius: 10px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      position: absolute;
+      top: -25px;
+      right: 0;
+      background: black;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+
+    .caption {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .sub-caption {
+      font-size: 14px;
+      font-weight: bold;
+      color: #f5d253;
+    }
+
+    .offline-alert,
+    .online-alert {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ff4444;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+      transition: opacity 0.3s ease;
+    }
+
+    .online-alert {
+      background: #44cc44;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="loading-container">
+    <div class="camp-scene">
+      <img src="../vd/fotolivexjj.jpg" class="scene-image" alt="Camp Scene" draggable="false"
+        oncontextmenu="return false;" />
+      <div class="overlay"></div>
+    </div>
+
+    <div class="offline-alert" id="offlineAlert">Tidak ada koneksi internet</div>
+    <div class="online-alert" id="onlineAlert">Kembali online</div>
+
+    <div class="version">V1.0.25</div>
+
+    <img src="https://i.ibb.co.com/DDXnL9f5/Logo.png" class="logo" alt="Logo" draggable="false" oncontextmenu="return false;">
+
+    <div class="progress">
+      <p class="caption">NewbieFams Website</p>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+        <span class="progress-text" id="progressText">0%</span>
+      </div>
+      <p class="sub-caption" id="subCaption">Loading...</p>
+    </div>
+  </div>
+
+  <script>
+    let progress = 0;
+    let isLoading = false;
+    let dotIndex = 0;
+    const fill = document.getElementById("progressFill");
+    const text = document.getElementById("progressText");
+    const subCaption = document.getElementById("subCaption");
+    const alertOffline = document.getElementById("offlineAlert");
+    const alertOnline = document.getElementById("onlineAlert");
+    const loadingDots = ["Loading", "Loading.", "Loading..", "Loading..."];
+    let dotInterval;
+
+    function updateDots() {
+      subCaption.innerText = loadingDots[dotIndex];
+      dotIndex = (dotIndex + 1) % loadingDots.length;
+    }
+
+    function showAlert(alertEl) {
+      alertEl.style.display = "block";
+      alertEl.style.opacity = "1";
+      setTimeout(() => {
+        alertEl.style.opacity = "0";
+        setTimeout(() => {
+          alertEl.style.display = "none";
+        }, 500);
+      }, 2000);
+    }
+
+    function showOffline() {
+      clearInterval(dotInterval);
+      subCaption.innerText = "Tidak ada koneksi internet!";
+      alertOffline.style.display = "block";
+      alertOffline.style.opacity = "1";
+      isLoading = false;
+    }
+
+    function simulateLoading() {
+      if (isLoading || !navigator.onLine) return;
+      isLoading = true;
+
+      dotInterval = setInterval(updateDots, 500);
+
+      function step() {
+        if (!navigator.onLine) {
+          showOffline();
+          return;
+        }
+
+        if (progress < 100) {
+          progress++;
+          fill.style.width = `${progress}%`;
+          text.innerText = `${progress}%`;
+          setTimeout(step, 50);
+        } else {
+          clearInterval(dotInterval);
+          subCaption.innerText = "Loading selesai, Selamat Datang!";
+          setTimeout(() => {
+            // Mengalihkan langsung ke /index (tanpa .html) memanfaatkan Pretty URLs GitHub
+            window.location.href = "home/informasi.html";
+          }, 1000);
+        }
+      }
+
+      step();
+    }
+
+    // Blokir klik kanan secara global
+    window.addEventListener("contextmenu", e => e.preventDefault());
+
+    // Jalankan sistem loading berdasarkan status koneksi awal
+    if (navigator.onLine) {
+      simulateLoading();
+    } else {
+      showOffline();
+    }
+
+    // Deteksi ketika internet kembali terhubung
+    window.addEventListener("online", () => {
+      alertOffline.style.display = "none";
+      showAlert(alertOnline);
+      if (!isLoading && progress < 100) simulateLoading();
+    });
+
+    // Deteksi ketika internet terputus
+    window.addEventListener("offline", () => {
+      showOffline();
+    });
+
+    // Proteksi ekstra untuk elemen gambar/link agar tidak bisa ditarik (anti-clone)
+    document.querySelectorAll('a, img').forEach(el => {
+      el.setAttribute('draggable', 'false');
+      el.setAttribute('oncontextmenu', 'return false');
+    });
+  </script>
+</body>
+
+</html>
